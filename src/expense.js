@@ -20,7 +20,10 @@ export default class Expense {
                 { style: 'currency', currency: 'BRL' }
             ).format(this.value),
             date: new Intl
-                .DateTimeFormat(language)
+                .DateTimeFormat(
+                    language,
+                    { month: 'long', day: '2-digit', year: 'numeric' },
+                )
                 .format(mapDate(this.date)),
             note: new Intl.ListFormat(
                 language,
@@ -34,7 +37,7 @@ export default class Expense {
             category: data.category,
             value: Number(data.value),
             date: data.date || new Date().toISOString().split('T')[0],
-            note: data.note.split(','),
+            note: data.note.split(',').map(string => string.trim()),
         });
     }
 }
