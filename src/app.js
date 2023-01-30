@@ -5,10 +5,34 @@ import database from './../database.json';
 
 const OPTIONS = {
     questions: {
-        'category': 'Qual foi a categoria da despesa?',
-        'value': 'Qual foi o valor da despesa?',
-        'date': 'Qual foi a data da despesa?',
-        'note': 'Adicione os itens da despesa (separados por vírgula):',
+        'category': {
+            message: 'Qual a categoria da despesa?',
+            isValid: (category) => {
+                return category.length > 0;
+            },
+            errorMessage: 'Por favor, insira uma categoria válida',
+        },
+        'value': {
+            message: 'Qual foi o valor da despesa?',
+            isValid: (value) => {
+                return value.length > 0;
+            },
+            errorMessage: 'Por favor, insira um valor válido (ex: 100.00)',
+        },
+        'date': {
+            message: 'Qual a data da despesa?',
+            isValid: (date) => {
+                return date.split('-').length === 3 || date === '';
+            },
+            errorMessage: 'Por favor, insira uma data válida no formato 2000-01-01)',
+        },
+        'note': {
+            message: 'Descreva a despesa',
+            isValid: (note) => {
+                return note.length > 0;
+            },
+            errorMessage: 'Descreva a despesa com a ocasião ou itens comprados, exemplo: "Restaurante - Mantra", ou "pão, leite, café"',
+        },
     },
     stopCommand: ':q',
     defaultLanguage: 'pt-BR',
@@ -32,7 +56,7 @@ export default class App {
         try {
             await this.handleIteration(currentQuestionIndex);
         } catch (error) {
-            await this.handleError(error);
+            await this.handleError(error, currentQuestionIndex);
         }
     }
     
@@ -47,8 +71,17 @@ export default class App {
     }
     
     handleIteration = async (currentQuestionIndex) => {
-        const currentQuestionFieldName = Object.keys(OPTIONS.questions)[currentQuestionIndex];
-        const answer = await this.terminalController.question(OPTIONS.questions[currentQuestionFieldName] + ' ');
+        const currentQuestionFieldName = Object.keys(
+            OPTIONS.questions,
+        )[currentQuestionIndex];
+        const currentQuestion = OPTIONS.questions[currentQuestionFieldName];
+        const answer = await this.terminalController.question(
+            currentQuestion.message + ' ',
+        );        
+
+        if (!currentQuestion.isValid(answer)) {
+            throw new Error(currentQuestion.errorMessage);
+        }
     
         if (answer === OPTIONS.stopCommand) {
             terminalController.closeTerminal();
@@ -62,9 +95,9 @@ export default class App {
         return this.mainLoop(currentQuestionIndex + 1);
     }
     
-    handleError = async (error) => {
-        console.log('Error: ', error);
+    handleError = async (error, currentQuestionIndex) => {
+        console.log('Error: ', error.message);
     
-        return this.mainLoop();
+        return this.mainLoop(currentQuestionIndex);
     }    
 }
